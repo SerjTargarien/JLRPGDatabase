@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca de Juegos de Rol</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.24/css/jquery.dataTables.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Biblioteca de Juegos de Rol</h1>
+  <p>Explore y filtre los juegos de rol disponibles.</p>
+  <div>
+    <label for="genre">Género:</label>
+    <select id="genre">
+      <option value="">Todos</option>
+    </select>
+    <label for="system">Sistema:</label>
+    <select id="system">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <table id="rpgTable" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>Juego</th>
+        <th>Género</th>
+        <th>Sistema</th>
+        <th>Complejidad</th>
+        <th>Descripción</th>
+        <th>URL</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.24/js/jquery.dataTables.min.js"></script>
+  <script>
+    async function loadData() {
+      const response = await fetch('data.json');
+      const data = await response.json();
+      return data;
+    }
+
+    function populateFilters(data) {
+      const genreSet = new Set();
+      const systemSet = new Set();
+      data.forEach(row => {
+        genreSet.add(row['Género']);
+        systemSet.add(row['Sistema']);
+      });
+      const genreSelect = document.getElementById('genre');
+      genreSet.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.textContent = g;
+        genreSelect.appendChild(opt);
+      });
+      const systemSelect = document.getElementById('system');
+      systemSet.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        systemSelect.appendChild(opt);
+      });
+    }
+
+    function applyFilters(table) {
+      const genre = document.getElementById('genre').value;
+      const system = document.getElementById('system').value;
+      table.column(1).search(genre, false, false);
+      table.column(2).search(system, false, false);
+      table.draw();
+    }
+
+    $(document).ready(async function() {
+      const data = await loadData();
+      populateFilters(data);
+      const table = $('#rpgTable').DataTable({
+        data: data,
+        columns: [
+          { data: 'Juego' },
+          { data: 'Género' },
+          { data: 'Sistema' },
+          { data: 'Complejidad' },
+          { data: 'Descripción' },
+          { data: 'URL', render: data => data ? `<a href="${data}" target="_blank">Enlace</a>` : '' }
+        ],
+        pageLength: 10,
+        language: {
+          url: 'https://cdn.datatables.net/plug-ins/1.13.3/i18n/es-ES.json'
+        }
+      });
+      $('#genre, #system').on('change', () => applyFilters(table));
+    });
+  </script>
+</body>
+</html>
